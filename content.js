@@ -1,5 +1,26 @@
-// Smart search focus with F key - works on any site (Chrome & Firefox compatible)
+// Smart search focus with customizable key binding (Chrome & Firefox compatible)
 console.log('Quick Search Jump: Content script loading...');
+
+// Default key binding (can be customized)
+let currentKeyBinding = {
+  key: 'f',
+  ctrl: false,
+  alt: false,
+  shift: false,
+  meta: false
+};
+
+// Load saved key binding from storage
+loadKeyBinding();
+
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.action === 'updateKeyBinding') {
+    console.log('Quick Search Jump: Received key binding update:', request.binding);
+    currentKeyBinding = request.binding;
+    sendResponse({success: true});
+  }
+});
 
 // Ensure DOM is ready
 if (document.readyState === 'loading') {
@@ -11,47 +32,55 @@ if (document.readyState === 'loading') {
 function initializeExtension() {
   console.log('Quick Search Jump: Initializing extension...');
   
-  // Add event listener for F key
-  document.addEventListener('keydown', (e) => {
-    // Only trigger on F key (case insensitive)
-    if (e.key.toLowerCase() === 'f') {
-      console.log('Quick Search Jump: F key pressed');
-      
-      // Check if we're already focused on a search input
-      const activeElement = document.activeElement;
-      const isSearchInput = isSearchElement(activeElement);
-      
-      console.log('Quick Search Jump: Active element is search input:', isSearchInput);
-      
-      // If not focused on search, find and focus search input
-      if (!isSearchInput) {
-        const searchResult = findSearchInputSmart();
-        if (searchResult) {
-          if (searchResult.type === 'button') {
-            console.log('Quick Search Jump: Found search button, clicking it:', searchResult);
-            searchResult.click();
-            // Wait a bit for the input to appear, then try to focus it
-            setTimeout(() => {
-              const searchInput = findSearchInputSmart();
-              if (searchInput && searchInput.type !== 'button') {
-                searchInput.focus();
-              }
-            }, 300);
-          } else {
-            console.log('Quick Search Jump: Found search input, focusing:', searchResult);
-            searchResult.focus();
-          }
-          e.preventDefault();
-        } else {
-          console.log('Quick Search Jump: No search input found');
-        }
-      } else {
-        console.log('Quick Search Jump: Already focused on search, ignoring F key');
-      }
-    }
-  });
+  // Add event listener for the custom key binding
+  document.addEventListener('keydown', handleKeyPress);
   
   console.log('Quick Search Jump: Extension initialized successfully');
+}
+
+// Function to handle key presses
+function handleKeyPress(e) {
+  // Check if the pressed key combination matches our binding
+  if (e.key.toLowerCase() === currentKeyBinding.key &&
+      e.ctrlKey === currentKeyBinding.ctrl &&
+      e.altKey === currentKeyBinding.alt &&
+      e.shiftKey === currentKeyBinding.shift &&
+      e.metaKey === currentKeyBinding.meta) {
+    
+    console.log('Quick Search Jump: Custom key combination pressed');
+    
+    // Check if we're already focused on a search input
+    const activeElement = document.activeElement;
+    const isSearchInput = isSearchElement(activeElement);
+    
+    console.log('Quick Search Jump: Active element is search input:', isSearchInput);
+    
+    // If not focused on search, find and focus search input
+    if (!isSearchInput) {
+      const searchResult = findSearchInputSmart();
+      if (searchResult) {
+        if (searchResult.type === 'button') {
+          console.log('Quick Search Jump: Found search button, clicking it:', searchResult);
+          searchResult.click();
+          // Wait a bit for the input to appear, then try to focus it
+          setTimeout(() => {
+            const searchInput = findSearchInputSmart();
+            if (searchInput && searchInput.type !== 'button') {
+              searchInput.focus();
+            }
+          }, 300);
+        } else {
+          console.log('Quick Search Jump: Found search input, focusing:', searchResult);
+          searchResult.focus();
+        }
+        e.preventDefault();
+      } else {
+        console.log('Quick Search Jump: No search input found');
+      }
+    } else {
+      console.log('Quick Search Jump: Already focused on search, ignoring key combination');
+    }
+  }
 }
 
 // Function to check if an element is a search input
@@ -385,7 +414,7 @@ function calculateSearchScore(input) {
   let score = 0;
   
   // Type-based scoring
-  if (input.type === 'search') score += 10;
+  if (input.type === 'search') score += 15;
   if (input.type === 'text') score += 5;
   
   // Attribute-based scoring
@@ -393,16 +422,17 @@ function calculateSearchScore(input) {
     input.name, input.id, input.placeholder, 
     input.className, input.getAttribute('aria-label'),
     input.getAttribute('title'), input.getAttribute('data-testid'),
-    input.getAttribute('enterkeyhint'), input.getAttribute('autocomplete')
+    input.getAttribute('enterkeyhint'), input.getAttribute('autocomplete'),
+    input.getAttribute('role')
   ].filter(Boolean);
   
   for (const attr of attributes) {
     const lower = attr.toLowerCase();
-    if (lower.includes('search')) score += 8;
-    if (lower.includes('q')) score += 6;
-    if (lower.includes('query')) score += 6;
-    if (lower.includes('find')) score += 5;
-    if (lower.includes('lookup')) score += 5;
+    if (lower.includes('search')) score += 12; // Higher score for "search"
+    if (lower.includes('q')) score += 8;
+    if (lower.includes('query')) score += 8;
+    if (lower.includes('find')) score += 6;
+    if (lower.includes('lookup')) score += 6;
   }
   
   // Position-based scoring
@@ -415,8 +445,12 @@ function calculateSearchScore(input) {
   if (input.offsetHeight > 30) score += 1; // Tall input
   
   // Additional scoring for common search patterns
-  if (input.placeholder && input.placeholder.toLowerCase().includes('search')) score += 4;
-  if (input.name === 'q') score += 3; // Very common search name
+  if (input.placeholder && input.placeholder.toLowerCase().includes('search')) score += 6;
+  if (input.name === 'q') score += 5; // Very common search name
+  
+  // Bonus for inputs that are clearly search-related
+  if (input.getAttribute('role') === 'searchbox') score += 10;
+  if (input.getAttribute('data-testid') && input.getAttribute('data-testid').toLowerCase().includes('search')) score += 8;
   
   return score;
 }
@@ -467,5 +501,56 @@ function highlightElement(element, color) {
       element.style.outlineOffset = '';
     }
   }, 3000);
+}
+
+// Function to save key binding to storage
+function saveKeyBinding(binding) {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      // Chrome extension storage
+      chrome.storage.local.set({ 'quickSearchJumpKeyBinding': binding });
+    } else if (typeof browser !== 'undefined' && browser.storage) {
+      // Firefox extension storage
+      browser.storage.local.set({ 'quickSearchJumpKeyBinding': binding });
+    } else {
+      // Fallback to localStorage
+      localStorage.setItem('quickSearchJumpKeyBinding', JSON.stringify(binding));
+    }
+    console.log('Quick Search Jump: Key binding saved');
+  } catch (e) {
+    console.log('Quick Search Jump: Could not save key binding:', e);
+  }
+}
+
+// Function to load key binding from storage
+function loadKeyBinding() {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      // Chrome extension storage
+      chrome.storage.local.get(['quickSearchJumpKeyBinding'], (result) => {
+        if (result.quickSearchJumpKeyBinding) {
+          currentKeyBinding = result.quickSearchJumpKeyBinding;
+          console.log('Quick Search Jump: Key binding loaded from Chrome storage:', currentKeyBinding);
+        }
+      });
+    } else if (typeof browser !== 'undefined' && browser.storage) {
+      // Firefox extension storage
+      browser.storage.local.get(['quickSearchJumpKeyBinding']).then((result) => {
+        if (result.quickSearchJumpKeyBinding) {
+          currentKeyBinding = result.quickSearchJumpKeyBinding;
+          console.log('Quick Search Jump: Key binding loaded from Firefox storage:', currentKeyBinding);
+        }
+      });
+    } else {
+      // Fallback to localStorage
+      const saved = localStorage.getItem('quickSearchJumpKeyBinding');
+      if (saved) {
+        currentKeyBinding = JSON.parse(saved);
+        console.log('Quick Search Jump: Key binding loaded from localStorage:', currentKeyBinding);
+      }
+    }
+  } catch (e) {
+    console.log('Quick Search Jump: Could not load key binding:', e);
+  }
 }
   
