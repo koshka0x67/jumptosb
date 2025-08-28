@@ -1,0 +1,23 @@
+{
+    "manifest_version": 3,
+    "name": "Quick Search Jump",
+    "version": "1.0",
+    "description": "Jump to search bars on any website with the F key",
+    "permissions": ["activeTab"],
+    "host_permissions": ["<all_urls>"],
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "run_at": "document_end",
+        "all_frames": true
+      }
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": ["content.js"],
+        "matches": ["<all_urls>"]
+      }
+    ]
+}
+  
