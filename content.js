@@ -55,31 +55,215 @@ function handleKeyPress(e) {
     
     console.log('Quick Search Jump: Active element is search input:', isSearchInput);
     
-    // If not focused on search, find and focus search input
+    // If not focused on search, find and activate search input
     if (!isSearchInput) {
       const searchResult = findSearchInputSmart();
       if (searchResult) {
-        if (searchResult.type === 'button') {
-          console.log('Quick Search Jump: Found search button, clicking it:', searchResult);
-          searchResult.click();
-          // Wait a bit for the input to appear, then try to focus it
-          setTimeout(() => {
-            const searchInput = findSearchInputSmart();
-            if (searchInput && searchInput.type !== 'button') {
-              searchInput.focus();
-            }
-          }, 300);
-        } else {
-          console.log('Quick Search Jump: Found search input, focusing:', searchResult);
-          searchResult.focus();
-        }
+        console.log('Quick Search Jump: Found search element, activating it:', searchResult);
+        activateSearchElement(searchResult);
         e.preventDefault();
+        e.stopPropagation();
       } else {
         console.log('Quick Search Jump: No search input found');
       }
     } else {
       console.log('Quick Search Jump: Already focused on search, ignoring key combination');
     }
+  }
+  
+  // Prevent default behavior for 'f' key when it's not our current binding
+  // This prevents Firefox's built-in "find in page" from triggering
+  if (e.key.toLowerCase() === 'f' && 
+      !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey &&
+      (currentKeyBinding.key !== 'f' || 
+       currentKeyBinding.ctrl || currentKeyBinding.alt || 
+       currentKeyBinding.shift || currentKeyBinding.meta)) {
+    
+    console.log('Quick Search Jump: Preventing default "f" key behavior (not our binding)');
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}
+
+// Function to activate a search element (click, focus, or both)
+function activateSearchElement(element) {
+  try {
+    const tagName = element.tagName.toLowerCase();
+    
+    if (tagName === 'input' || tagName === 'textarea') {
+      // For input elements, simulate real mouse click
+      console.log('Quick Search Jump: Activating input element with mouse click');
+      
+      // Method 1: Simulate real mouse click event
+      try {
+        // Create and dispatch mouse events to simulate real user interaction
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Mouse down event
+        const mouseDownEvent = new MouseEvent('mousedown', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(mouseDownEvent);
+        
+        // Mouse up event
+        const mouseUpEvent = new MouseEvent('mouseup', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(mouseUpEvent);
+        
+        // Click event
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(clickEvent);
+        
+        console.log('Quick Search Jump: Mouse click simulation successful');
+        
+        // Method 2: Also try to focus after the click
+        setTimeout(() => {
+          try {
+            element.focus();
+            console.log('Quick Search Jump: Focus after click successful');
+          } catch (focusError) {
+            console.log('Quick Search Jump: Focus after click failed:', focusError);
+          }
+        }, 50);
+        
+      } catch (clickError) {
+        console.log('Quick Search Jump: Mouse click simulation failed, trying fallback:', clickError);
+        
+        // Fallback: Try regular click and focus
+        try {
+          element.click();
+          element.focus();
+          console.log('Quick Search Jump: Fallback click/focus successful');
+        } catch (fallbackError) {
+          console.log('Quick Search Jump: Fallback also failed:', fallbackError);
+        }
+      }
+      
+    } else if (tagName === 'button' || element.getAttribute('role') === 'button') {
+      // For button elements, simulate real mouse click
+      console.log('Quick Search Jump: Activating button element with mouse click');
+      try {
+        // Simulate real mouse click on button
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Mouse down event
+        const mouseDownEvent = new MouseEvent('mousedown', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(mouseDownEvent);
+        
+        // Mouse up event
+        const mouseUpEvent = new MouseEvent('mouseup', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(mouseUpEvent);
+        
+        // Click event
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(clickEvent);
+        
+        console.log('Quick Search Jump: Button mouse click simulation successful');
+        
+        // Wait a bit for the search input to appear, then try to focus it
+        setTimeout(() => {
+          const searchInput = findSearchInputSmart();
+          if (searchInput && searchInput.tagName.toLowerCase() === 'input') {
+            console.log('Quick Search Jump: Found search input after button click, activating it');
+            activateSearchElement(searchInput); // Recursively activate the input
+          }
+        }, 300);
+        
+      } catch (clickError) {
+        console.log('Quick Search Jump: Button mouse click simulation failed:', clickError);
+      }
+    } else {
+      // For other elements, simulate real mouse click
+      console.log('Quick Search Jump: Activating other element type with mouse click:', tagName);
+      try {
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Mouse down event
+        const mouseDownEvent = new MouseEvent('mousedown', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(mouseDownEvent);
+        
+        // Mouse up event
+        const mouseUpEvent = new MouseEvent('mouseup', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(mouseUpEvent);
+        
+        // Click event
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0
+        });
+        element.dispatchEvent(clickEvent);
+        
+        console.log('Quick Search Jump: Other element mouse click simulation successful');
+      } catch (clickError) {
+        console.log('Quick Search Jump: Other element mouse click simulation failed:', clickError);
+      }
+    }
+    
+  } catch (error) {
+    console.log('Quick Search Jump: Error activating search element:', error);
   }
 }
 
@@ -115,98 +299,153 @@ function isSearchElement(element) {
 // Smart function to find search inputs on any page
 function findSearchInputSmart() {
   console.log('Quick Search Jump: Searching for search inputs...');
-  
-  // Strategy 1: Look for obvious search inputs first
-  const obviousSearch = findObviousSearchInputs();
-  if (obviousSearch) {
-    console.log('Quick Search Jump: Found obvious search input:', obviousSearch);
-    highlightElement(obviousSearch, 'green');
-    return obviousSearch;
+
+  // Simple approach: Find all elements with "search" in their attributes
+  const searchElements = findAllElementsWithSearch();
+  console.log('Quick Search Jump: Found elements with "search":', searchElements.length);
+
+  // Filter to only inputs and score them
+  const allSearchInputs = searchElements
+    .filter(element => element.tagName.toLowerCase() === 'input' || element.tagName.toLowerCase() === 'textarea');
+
+  console.log('Quick Search Jump: Search elements that are inputs:', allSearchInputs.length);
+
+  // Also look for search containers that might contain inputs
+  const searchContainers = searchElements.filter(element => {
+    const tagName = element.tagName.toLowerCase();
+    return tagName === 'div' || tagName === 'form' || tagName === 'button';
+  });
+
+  console.log('Quick Search Jump: Search containers found:', searchContainers.length);
+
+  // Look for inputs inside search containers
+  const inputsInContainers = [];
+  for (const container of searchContainers) {
+    const inputs = container.querySelectorAll('input, textarea');
+    for (const input of inputs) {
+      if (!allSearchInputs.includes(input)) {
+        inputsInContainers.push(input);
+        console.log('Quick Search Jump: Found input in search container:', {
+          container: container,
+          input: input,
+          inputName: input.name,
+          inputType: input.type,
+          inputPlaceholder: input.placeholder
+        });
+      }
+    }
   }
-  
-  // Strategy 2: Look for search buttons with "Search" text
+
+  // Combine all inputs
+  const allInputs = [...allSearchInputs, ...inputsInContainers];
+  console.log('Quick Search Jump: Total inputs found (direct + in containers):', allInputs.length);
+
+  const visibleSearchInputs = allInputs.filter(input => {
+    const visible = isVisible(input);
+    if (!visible) {
+      console.log('Quick Search Jump: Input filtered out (not visible):', {
+        input: input,
+        name: input.name,
+        type: input.type,
+        placeholder: input.placeholder,
+        rect: input.getBoundingClientRect()
+      });
+    }
+    return visible;
+  });
+
+  console.log('Quick Search Jump: Visible search inputs:', visibleSearchInputs.length);
+
+  const searchInputs = visibleSearchInputs
+    .map(input => ({
+      element: input,
+      score: calculateSearchScore(input)
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  console.log('Quick Search Jump: Scored search inputs:', searchInputs);
+
+  if (searchInputs.length > 0) {
+    const bestInput = searchInputs[0];
+    console.log('Quick Search Jump: Best search input found:', bestInput);
+    highlightElement(bestInput.element, 'green');
+    return bestInput.element;
+  }
+
+  // Fallback: Look for search buttons
   const searchButton = findSearchButton();
   if (searchButton) {
     console.log('Quick Search Jump: Found search button:', searchButton);
     highlightElement(searchButton, 'blue');
     return searchButton;
   }
-  
-  // Strategy 3: Look for inputs near search-related text
-  const contextualSearch = findContextualSearchInputs();
-  if (contextualSearch) {
-    console.log('Quick Search Jump: Found contextual search input:', contextualSearch);
-    highlightElement(contextualSearch, 'orange');
-    return contextualSearch;
-  }
-  
-  // Strategy 4: Look for inputs in common search locations
-  const positionedSearch = findPositionedSearchInputs();
-  if (positionedSearch) {
-    console.log('Quick Search Jump: Found positioned search input:', positionedSearch);
-    highlightElement(positionedSearch, 'purple');
-    return positionedSearch;
-  }
-  
-  // Strategy 5: Fallback to any input that looks promising
-  const fallbackSearch = findFallbackSearchInputs();
-  if (fallbackSearch) {
-    console.log('Quick Search Jump: Found fallback search input:', fallbackSearch);
-    highlightElement(fallbackSearch, 'red');
-    return fallbackSearch;
-  }
-  
-  console.log('Quick Search Jump: No search input found with any strategy');
+
+  console.log('Quick Search Jump: No search input found');
   return null;
 }
 
-// Strategy 1: Find obvious search inputs
-function findObviousSearchInputs() {
-  const selectors = [
-    'input[type="search"]',
-    'input[placeholder*="Search"]',
-    'input[placeholder*="search"]',
-    'input[name*="search"]',
-    'input[name*="q"]',
-    'input[name*="query"]',
-    'input[id*="search"]',
-    'input[class*="search"]',
-    'textarea[name*="search"]',
-    'textarea[name*="q"]',
-    'textarea[name*="query"]',
-    // Additional common patterns
-    'input[enterkeyhint="search"]',
-    'input[autocomplete*="search"]',
-    'input[data-testid*="search"]',
-    'input[aria-label*="search"]'
-  ];
+// Function to find all elements with "search" in their attributes
+function findAllElementsWithSearch() {
+  const searchElements = [];
+  const allElements = document.querySelectorAll('*');
   
-  for (const selector of selectors) {
-    const input = document.querySelector(selector);
-    if (input && isVisible(input)) return input;
-  }
+  console.log('Quick Search Jump: Checking', allElements.length, 'elements for search attributes...');
   
-  // Strategy 1.5: Find any input containing "search" mixed with other words
-  const allInputs = Array.from(document.querySelectorAll('input, textarea'));
-  for (const input of allInputs) {
-    if (!isVisible(input)) continue;
-    
-    // Check all attributes for "search" mixed with other words
+  for (const element of allElements) {
+    // Check all relevant attributes for "search"
     const attributes = [
-      input.name, input.id, input.placeholder, 
-      input.className, input.getAttribute('aria-label'),
-      input.getAttribute('title'), input.getAttribute('data-testid'),
-      input.getAttribute('enterkeyhint'), input.getAttribute('autocomplete')
+      element.id,
+      element.name,
+      element.className,
+      element.getAttribute('placeholder'),
+      element.getAttribute('aria-label'),
+      element.getAttribute('title'),
+      element.getAttribute('data-testid'),
+      element.getAttribute('role'),
+      element.getAttribute('type'),
+      element.getAttribute('enterkeyhint'),
+      element.getAttribute('autocomplete')
     ].filter(Boolean);
     
+    // Check if any attribute contains "search"
     for (const attr of attributes) {
-      if (attr.toLowerCase().includes('search')) {
-        return input;
+      // Ensure attr is a string before calling toLowerCase()
+      if (typeof attr === 'string' && attr.toLowerCase().includes('search')) {
+        searchElements.push(element);
+        console.log('Quick Search Jump: Found element with "search" in attribute:', {
+          attribute: attr,
+          element: element,
+          tagName: element.tagName,
+          isInput: element.tagName.toLowerCase() === 'input' || element.tagName.toLowerCase() === 'textarea',
+          isVisible: isVisible(element)
+        });
+        break; // Don't add the same element twice
       }
     }
   }
   
-  return null;
+  // Also check for common search patterns that don't contain "search" but are clearly search inputs
+  const commonSearchInputs = document.querySelectorAll('input[name="q"], input[name="query"], input[type="search"]');
+  console.log('Quick Search Jump: Found common search inputs:', commonSearchInputs.length);
+  
+  for (const input of commonSearchInputs) {
+    if (!searchElements.includes(input)) {
+      searchElements.push(input);
+      console.log('Quick Search Jump: Added common search input:', {
+        element: input,
+        tagName: input.tagName,
+        isInput: input.tagName.toLowerCase() === 'input' || input.tagName.toLowerCase() === 'textarea',
+        isVisible: isVisible(input),
+        name: input.name,
+        type: input.type,
+        placeholder: input.placeholder
+      });
+    }
+  }
+  
+  console.log('Quick Search Jump: Total elements with "search" found:', searchElements.length);
+  return searchElements;
 }
 
 // Strategy 2: Find search buttons with "Search" text
@@ -427,12 +666,27 @@ function calculateSearchScore(input) {
   ].filter(Boolean);
   
   for (const attr of attributes) {
-    const lower = attr.toLowerCase();
-    if (lower.includes('search')) score += 12; // Higher score for "search"
-    if (lower.includes('q')) score += 8;
-    if (lower.includes('query')) score += 8;
-    if (lower.includes('find')) score += 6;
-    if (lower.includes('lookup')) score += 6;
+    if (typeof attr === 'string') {
+      const lower = attr.toLowerCase();
+      if (lower.includes('search')) score += 12; // Higher score for "search"
+      if (lower.includes('q')) score += 8;
+      if (lower.includes('query')) score += 8;
+      if (lower.includes('find')) score += 6;
+      if (lower.includes('lookup')) score += 6;
+    }
+  }
+  
+  // Special scoring for common search patterns
+  if (input.name === 'q') score += 15; // Very high score for name="q"
+  if (input.name === 'query') score += 12;
+  if (input.getAttribute('enterkeyhint') === 'search') score += 10;
+  
+  // Placeholder-based scoring
+  if (input.placeholder && typeof input.placeholder === 'string') {
+    const placeholder = input.placeholder.toLowerCase();
+    if (placeholder.includes('search')) score += 10;
+    if (placeholder.includes('find')) score += 6;
+    if (placeholder.includes('look for')) score += 6;
   }
   
   // Position-based scoring
@@ -444,41 +698,97 @@ function calculateSearchScore(input) {
   if (input.offsetWidth > 200) score += 2; // Wide input
   if (input.offsetHeight > 30) score += 1; // Tall input
   
-  // Additional scoring for common search patterns
-  if (input.placeholder && input.placeholder.toLowerCase().includes('search')) score += 6;
-  if (input.name === 'q') score += 5; // Very common search name
-  
   // Bonus for inputs that are clearly search-related
   if (input.getAttribute('role') === 'searchbox') score += 10;
-  if (input.getAttribute('data-testid') && input.getAttribute('data-testid').toLowerCase().includes('search')) score += 8;
+  if (input.getAttribute('data-testid') && typeof input.getAttribute('data-testid') === 'string' && input.getAttribute('data-testid').toLowerCase().includes('search')) score += 8;
+  
+  console.log('Quick Search Jump: Input scored:', {
+    element: input,
+    score: score,
+    name: input.name,
+    placeholder: input.placeholder,
+    type: input.type,
+    enterkeyhint: input.getAttribute('enterkeyhint')
+  });
   
   return score;
 }
 
-// Helper function to check if element is visible (cross-browser compatible)
+// Function to check if an element is visible
 function isVisible(element) {
   if (!element) return false;
   
   try {
     const rect = element.getBoundingClientRect();
-    const style = window.getComputedStyle ? window.getComputedStyle(element) : element.currentStyle;
+    const style = window.getComputedStyle(element);
     
-    // Handle different browser implementations
-    const display = style.display || style.getPropertyValue('display');
-    const visibility = style.visibility || style.getPropertyValue('visibility');
-    const opacity = style.opacity || style.getPropertyValue('opacity');
+    // Basic visibility checks
+    const display = style.display;
+    const visibility = style.visibility;
+    const opacity = parseFloat(style.opacity);
     
-    return rect.width > 0 && 
-           rect.height > 0 && 
-           display !== 'none' && 
-           visibility !== 'hidden' && 
-           opacity !== '0' &&
-           element.offsetParent !== null;
-  } catch (e) {
-    // Fallback for older browsers
-    return element.offsetParent !== null && 
-           element.offsetWidth > 0 && 
-           element.offsetHeight > 0;
+    // Check if element has dimensions and is not hidden
+    const hasSize = rect.width > 0 && rect.height > 0;
+    const isNotHidden = display !== 'none' && visibility !== 'hidden' && opacity > 0;
+    const hasParent = element.offsetParent !== null;
+    
+    let isVisible = hasSize && isNotHidden && hasParent;
+    
+    // For Reddit and similar sites, be very lenient with visibility
+    // If it's an input with search-related attributes, consider it visible even if strict checks fail
+    if (!isVisible && element.tagName.toLowerCase() === 'input') {
+      const hasSearchAttributes = (
+        element.name === 'q' ||
+        element.name === 'query' ||
+        element.getAttribute('enterkeyhint') === 'search' ||
+        (element.placeholder && element.placeholder.toLowerCase().includes('search')) ||
+        element.type === 'search' ||
+        element.id === 'search' ||
+        element.id === 'searchInput' ||
+        (element.className && typeof element.className === 'string' && element.className.toLowerCase().includes('search'))
+      );
+
+      if (hasSearchAttributes) {
+        console.log('Quick Search Jump: Input has search attributes, considering visible despite strict check:', {
+          element: element,
+          name: element.name,
+          placeholder: element.placeholder,
+          enterkeyhint: element.getAttribute('enterkeyhint'),
+          type: element.type,
+          id: element.id,
+          className: element.className,
+          rect: { width: rect.width, height: rect.height },
+          display: display,
+          visibility: visibility,
+          opacity: opacity,
+          offsetParent: element.offsetParent
+        });
+        return true; // Be very lenient for search inputs
+      }
+    }
+    
+    // Also be lenient for elements inside search containers
+    if (!isVisible) {
+      const parent = element.parentElement;
+      if (parent) {
+        const parentClassName = parent.className;
+        const parentId = parent.id;
+        if (typeof parentClassName === 'string' && parentClassName.toLowerCase().includes('search')) {
+          console.log('Quick Search Jump: Element is inside search container, considering visible:', {
+            element: element,
+            parent: parent,
+            parentClassName: parentClassName,
+            parentId: parentId
+          });
+          return true;
+        }
+      }
+    }
+    
+    return isVisible;
+  } catch (error) {
+    console.log('Quick Search Jump: Error checking visibility:', error);
+    return false;
   }
 }
 
