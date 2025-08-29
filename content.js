@@ -71,18 +71,7 @@ function handleKeyPress(e) {
     }
   }
   
-  // Prevent default behavior for 'f' key when it's not our current binding
-  // This prevents Firefox's built-in "find in page" from triggering
-  if (e.key.toLowerCase() === 'f' && 
-      !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey &&
-      (currentKeyBinding.key !== 'f' || 
-       currentKeyBinding.ctrl || currentKeyBinding.alt || 
-       currentKeyBinding.shift || currentKeyBinding.meta)) {
-    
-    console.log('Quick Search Jump: Preventing default "f" key behavior (not our binding)');
-    e.preventDefault();
-    e.stopPropagation();
-  }
+
 }
 
 // Function to activate a search element (click, focus, or both)
