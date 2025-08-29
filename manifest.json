@@ -1,11 +1,10 @@
 {
-    "manifest_version": 3,
+    "manifest_version": 2,
     "name": "Quick Search Jump",
     "version": "1.0",
     "description": "Jump to search bars on any website with customizable keyboard shortcuts",
-    "permissions": ["activeTab", "storage"],
-    "host_permissions": ["<all_urls>"],
-    "action": {
+    "permissions": ["activeTab", "storage", "<all_urls>"],
+    "browser_action": {
         "default_popup": "popup.html",
         "default_title": "Quick Search Jump - Customize Key Binding"
     },
@@ -17,11 +16,10 @@
         "all_frames": true
       }
     ],
-    "web_accessible_resources": [
-      {
-        "resources": ["content.js"],
-        "matches": ["<all_urls>"]
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "quick-search-jump@example.com"
       }
-    ]
+    }
 }
   
